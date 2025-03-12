@@ -14,6 +14,6 @@ if minetest.get_modpath("default") then
 	dofile(minetest.get_modpath("mesecons_gamecompat").."/compat_mtg.lua")
 end
 
-if minetest.get_modpath("doors") then
-	dofile(minetest.get_modpath("mesecons_gamecompat").."/doors.lua")
-end
+--if minetest.get_modpath("doors") then
+--	dofile(minetest.get_modpath("mesecons_gamecompat").."/doors.lua")
+--end
