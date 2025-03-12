@@ -91,7 +91,8 @@ lg.deserialize = function(s)
 	end
 	-- More than 14 instructions (write to all 10 regs + 4 outputs)
 	-- will not pass the write-once requirement of the validator
-	assert(#ret == 14)
+--	assert(#ret == 14)
+	if #ret > 14 then ret = {} end
 	return ret
 end
 

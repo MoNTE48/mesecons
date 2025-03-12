@@ -219,7 +219,7 @@ plg.to_formspec_string = function(is, err)
 	local x = 1 - 0.75
 	local y = 1 - 0.25
 	for i = 1, 14 do
-		local cur = is[i]
+		local cur = is[i] or {}
 		s = s .. dropdown_op    (x      , y, tostring(i).."op1", cur.op1)
 		s = s .. dropdown_action(x+0.75 , y, tostring(i).."act", cur.action)
 		s = s .. dropdown_op    (x+1.875, y, tostring(i).."op2", cur.op2)
@@ -432,6 +432,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		return -- we only care when the user clicks "Program"
 	end
 	local pos = plg.open_formspecs[player_name]
+	if not pos then return end
 	if minetest.is_protected(pos, player_name) then
 		minetest.record_protection_violation(pos, player_name)
 		return
