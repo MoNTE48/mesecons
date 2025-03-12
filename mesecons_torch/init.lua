@@ -43,8 +43,10 @@ end
 minetest.register_craft({
 	output = "mesecons_torch:mesecon_torch_on 4",
 	recipe = {
-	{"group:mesecon_conductor_craftable"},
-	{"group:stick"},}
+		{"", "bluestone_torch:torch", ""},
+		{"bluestone_torch:torch", "group:mesecon_conductor_craftable", "bluestone_torch:torch"},
+		{"", "bluestone_torch:torch", ""}
+	}
 })
 
 local torch_selectionbox =
@@ -56,8 +58,8 @@ local torch_selectionbox =
 }
 
 minetest.register_node("mesecons_torch:mesecon_torch_off", {
-	drawtype = "plantlike",
-	tiles = {"jeija_torches_off.png"},
+	drawtype = "torchlike",
+	tiles = {"jeija_torches_off.png", "jeija_torches_off_ceiling.png", "jeija_torches_off_side.png"},
 	inventory_image = "jeija_torches_off.png",
 	paramtype = "light",
 	is_ground_content = false,
@@ -75,8 +77,8 @@ minetest.register_node("mesecons_torch:mesecon_torch_off", {
 })
 
 minetest.register_node("mesecons_torch:mesecon_torch_on", {
-	drawtype = "plantlike",
-	tiles = {"jeija_torches_on.png"},
+	drawtype = "torchlike",
+	tiles = {"jeija_torches_on.png", "jeija_torches_on_ceiling.png", "jeija_torches_on_side.png"},
 	inventory_image = "jeija_torches_on.png",
 	wield_image = "jeija_torches_on.png",
 	paramtype = "light",
