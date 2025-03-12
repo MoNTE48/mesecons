@@ -50,18 +50,18 @@ local function initialize_data(meta)
 	local commands = minetest.formspec_escape(meta:get_string("commands"))
 	meta:set_string("formspec",
 		"size[9,5]" ..
-		"textarea[0.5,0.5;8.5,4;commands;Commands;"..commands.."]" ..
-		"label[1,3.8;@nearest, @farthest, and @random are replaced by the respective player names]" ..
-		"button_exit[3.3,4.5;2,1;submit;Submit]")
+		"textarea[0.5,0.5;8.5,4;commands;" .. S("Commands:") .. ";"..commands.."]" ..
+		"label[0.2,3.8;@nearest, @farthest, and @random are replaced by the respective player names]" ..
+		"button_exit[3.3,4.5;2,1;submit;" .. S("Submit") .. "]")
 	local owner = meta:get_string("owner")
 	if owner == "" then
 		owner = "not owned"
 	else
 		owner = "owned by " .. owner
 	end
-	meta:set_string("infotext", "Command Block\n" ..
+	meta:set_string("infotext", S("Command Block") .. "\n" ..
 		"(" .. owner .. ")\n" ..
-		"Commands: "..commands)
+		S("Commands:") .. " " ..commands)
 end
 
 local function construct(pos)
@@ -136,7 +136,8 @@ local function commandblock_action_on(pos, node)
 		return
 	end
 
-	minetest.swap_node(pos, {name = "mesecons_commandblock:commandblock_on"})
+	node.name = "mesecons_commandblock:commandblock_on"
+	minetest.swap_node(pos, node)
 
 	local meta = minetest.get_meta(pos)
 	local owner = meta:get_string("owner")
@@ -146,22 +147,25 @@ local function commandblock_action_on(pos, node)
 
 	local commands = resolve_commands(meta:get_string("commands"), pos)
 	for _, command in pairs(commands:split("\n")) do
-		local pos = command:find(" ")
+		local spacepos = command:find(" ")
 		local cmd, param = command, ""
-		if pos then
-			cmd = command:sub(1, pos - 1)
-			param = command:sub(pos + 1)
+		if spacepos then
+			cmd = command:sub(1, spacepos - 1)
+			param = command:sub(spacepos + 1)
 		end
+
 		local cmddef = minetest.chatcommands[cmd]
 		if not cmddef then
-			minetest.chat_send_player(owner, "The command "..cmd.." does not exist")
+			minetest.chat_send_player(owner, "The command \"" .. cmd .. "\" does not exist")
 			return
 		end
+
 		if #param > param_maxlen then
-			minetest.chat_send_player(owner, "Command parameters are limited to max. " ..
-				param_maxlen .. " bytes.")
+			minetest.chat_send_player(owner, "Command parameters can only be " ..
+				param_maxlen .. " bytes long")
 			return
 		end
+
 		local has_privs, missing_privs = minetest.check_player_privs(owner, cmddef.privs)
 		if not has_privs then
 			minetest.chat_send_player(owner, "You don't have permission "
@@ -170,21 +174,30 @@ local function commandblock_action_on(pos, node)
 					..table.concat(missing_privs, ", ")..")")
 			return
 		end
-		cmddef.func(owner, param)
+
+		local success, result_or_err = pcall(cmddef.func, owner, param)
+		if not success then
+			minetest.log("error", string.format(
+				"[commandblock] Error while running cmd '%s' with param '%s' by '%s' at block %s: %s",
+				cmd, (param or "nil"), owner, minetest.pos_to_string(pos), result_or_err
+			))
+			minetest.chat_send_player(owner, "Error occurred")
+		end
 	end
 end
 
 local function commandblock_action_off(pos, node)
 	if node.name == "mesecons_commandblock:commandblock_on" then
-		minetest.swap_node(pos, {name = "mesecons_commandblock:commandblock_off"})
+		node.name = "mesecons_commandblock:commandblock_off"
+		minetest.swap_node(pos, node)
 	end
 end
 
 local function can_dig(pos, player)
 	local meta = minetest.get_meta(pos)
 	local owner = meta:get_string("owner")
-	return owner == "" or owner == player:get_player_name() or
-		minetest.check_player_privs(player, "protection_bypass")
+	return owner == "" or (player and (owner == player:get_player_name() or
+		minetest.check_player_privs(player, "protection_bypass")))
 end
 
 minetest.register_node("mesecons_commandblock:commandblock_off", {
