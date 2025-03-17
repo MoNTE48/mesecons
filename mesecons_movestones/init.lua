@@ -44,6 +44,9 @@ end
 function mesecon.register_movestone(name, def, is_sticky, is_vertical)
 	local function movestone_move(pos, node, rulename)
 		local direction = get_movestone_direction(rulename, is_vertical)
+		if not direction then
+			return
+		end
 		local frontpos = vector.add(pos, direction)
 		local meta = minetest.get_meta(pos)
 		local owner = meta:get_string("owner")
