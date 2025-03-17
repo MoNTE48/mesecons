@@ -17,11 +17,10 @@ minetest.register_chatcommand("tell", {
 	func = function(name, param)
 		local found, _, target, message = param:find("^([^%s]+)%s+(.*)$")
 		if found == nil then
-			minetest.chat_send_player(name, "Invalid usage: " .. param)
-			return
+			return false, "Invalid usage: " .. param
 		end
 		if not minetest.get_player_by_name(target) then
-			minetest.chat_send_player(name, "Invalid target: " .. target)
+			return false, "Invalid target: " .. target
 		end
 		minetest.chat_send_player(target, name .. " whispers: " .. message, false)
 	end
@@ -31,17 +30,16 @@ minetest.register_chatcommand("hp", {
 	params = "<name> <value>",
 	description = S("Set health of <name> to <value> hitpoints"),
 	privs = {ban=true},
-	func = function(name, param)
+	func = function(_, param)
 		local found, _, target, value = param:find("^([^%s]+)%s+(%d+)$")
 		if found == nil then
-			minetest.chat_send_player(name, "Invalid usage: " .. param)
-			return
+			return false, "Invalid usage: " .. param
 		end
 		local player = minetest.get_player_by_name(target)
 		if player then
 			player:set_hp(value)
 		else
-			minetest.chat_send_player(name, "Invalid target: " .. target)
+			return false, "Invalid target: " .. target
 		end
 	end
 })
@@ -51,13 +49,14 @@ local function initialize_data(meta)
 	meta:set_string("formspec",
 		"size[9,5]" ..
 		"textarea[0.5,0.5;8.5,4;commands;" .. S("Commands:") .. ";"..commands.."]" ..
-		"label[0.2,3.8;@nearest, @farthest, and @random are replaced by the respective player names]" ..
+		"label[0.2,3.8;" ..
+			S("@nearest, @farthest, and @random are replaced by the respective player names") .. "]" ..
 		"button_exit[3.3,4.5;2,1;submit;" .. S("Submit") .. "]")
 	local owner = meta:get_string("owner")
 	if owner == "" then
-		owner = "not owned"
+		owner = S("not owned")
 	else
-		owner = "owned by " .. owner
+		owner = S("owned by @1", owner)
 	end
 	meta:set_string("infotext", S("Command Block") .. "\n" ..
 		"(" .. owner .. ")\n" ..
@@ -156,7 +155,7 @@ local function commandblock_action_on(pos, node)
 
 		local cmddef = minetest.chatcommands[cmd]
 		if not cmddef then
-			minetest.chat_send_player(owner, "The command \"" .. cmd .. "\" does not exist")
+			minetest.chat_send_player(owner, S("The command \"@1\" does not exist", cmd))
 			return
 		end
 
@@ -168,10 +167,9 @@ local function commandblock_action_on(pos, node)
 
 		local has_privs, missing_privs = minetest.check_player_privs(owner, cmddef.privs)
 		if not has_privs then
-			minetest.chat_send_player(owner, "You don't have permission "
-					.."to run "..cmd
-					.." (missing privileges: "
-					..table.concat(missing_privs, ", ")..")")
+			minetest.chat_send_player(owner, S("You don't have permission "
+					.."to run @1 (missing privileges: @2)",
+					cmd, table.concat(missing_privs, ", ")))
 			return
 		end
 
@@ -181,7 +179,7 @@ local function commandblock_action_on(pos, node)
 				"[commandblock] Error while running cmd '%s' with param '%s' by '%s' at block %s: %s",
 				cmd, (param or "nil"), owner, minetest.pos_to_string(pos), result_or_err
 			))
-			minetest.chat_send_player(owner, "Error occurred")
+			minetest.chat_send_player(owner, "Error while running cmd \"%s\"")
 		end
 	end
 end

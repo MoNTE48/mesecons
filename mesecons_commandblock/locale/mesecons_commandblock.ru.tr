@@ -4,7 +4,14 @@
 Say <text> as the server=Сказать <текст> от имени сервера
 Say <text> to <name> privately=Сказать <текст> игроку <имя> в личном сообщении
 Set health of <name> to <value> hitpoints=Установить здоровье игрока <имя> на <значение> хитпоинтов
-Command Block=Комадный блок
+Command Block=Командный блок
 
+@nearest, @farthest, and @random are replaced by the respective player names=@nearest, @farthest и @random заменяются соответствующими именами игроков
 Commands:=Команды:
 Submit=Отправить
+
+not owned=нет владельца
+owned by @1=владелец: @1
+
+The command "@1" does not exist=Команда "@1" не существует
+You don't have permission to run @1 (missing privileges: @2)=У вас нет привилегий для выполнение @1 (отсутствуют привилегии: @2)

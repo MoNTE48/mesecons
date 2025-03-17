@@ -5,3 +5,13 @@ Say <text> as the server=
 Say <text> to <name> privately=
 Set health of <name> to <value> hitpoints=
 Command Block=
+
+@nearest, @farthest, and @random are replaced by the respective player names=
+Commands:=
+Submit=
+
+not owned=
+owned by @1=
+
+The command "@1" does not exist=
+You don't have permission to run @1 (missing privileges: @2)=
