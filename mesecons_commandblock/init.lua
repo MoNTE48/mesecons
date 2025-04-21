@@ -1,5 +1,6 @@
 local S = minetest.get_translator(minetest.get_current_modname())
 local param_maxlen = mesecon.setting("commandblock_param_maxlen", 10000)
+local sp = minetest.is_singleplayer()
 
 minetest.register_chatcommand("say", {
 	params = "<text>",
@@ -165,7 +166,12 @@ local function commandblock_action_on(pos, node)
 			return
 		end
 
-		local has_privs, missing_privs = minetest.check_player_privs(owner, cmddef.privs)
+		local privs = cmddef.privs
+		if not sp then
+			privs = table.copy(privs)
+			privs.give = true -- allow use by server admins only
+		end
+		local has_privs, missing_privs = minetest.check_player_privs(owner, privs)
 		if not has_privs then
 			minetest.chat_send_player(owner, S("You don't have permission "
 					.."to run @1 (missing privileges: @2)",
