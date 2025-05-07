@@ -677,14 +677,21 @@ yc.update_real_portstates = function(pos, _, rulename, newstate)
 		L[i] = n%2
 		n = math.floor(n/2)
 	end
+	local mapping = {4, 1, nil, 3, 2}
 	if rulename.x == nil then
 		for _, rname in ipairs(rulename) do
-			local port = ({4, 1, nil, 3, 2})[rname.x+2*rname.z+3]
-			L[port] = (newstate == "on") and 1 or 0
+			local idx = rname.x+2*rname.z+3
+			local port = mapping[idx]
+			if port then
+				L[port] = (newstate == "on") and 1 or 0
+			end
 		end
 	else
-		local port = ({4, 1, nil, 3, 2})[rulename.x+2*rulename.z+3]
-		L[port] = (newstate == "on") and 1 or 0
+		local idx = rulename.x+2*rulename.z+3
+		local port = mapping[idx]
+		if port then
+			L[port] = (newstate == "on") and 1 or 0
+		end
 	end
 	local new_portstates = 1 + L[1] + 2*L[2] + 4*L[3] + 8*L[4]
 	if new_portstates ~= real_portstates then
