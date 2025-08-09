@@ -15,3 +15,5 @@ owned by @1=владелец: @1
 
 The command "@1" does not exist=Команда "@1" не существует
 You don't have permission to run @1 (missing privileges: @2)=У вас нет привилегий для выполнение @1 (отсутствуют привилегии: @2)
+
+Allows using a Command Block=Позволяет использовать Командный блок

@@ -15,3 +15,5 @@ owned by @1=
 
 The command "@1" does not exist=
 You don't have permission to run @1 (missing privileges: @2)=
+
+Allows using a Command Block

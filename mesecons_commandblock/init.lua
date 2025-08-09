@@ -1,6 +1,5 @@
 local S = minetest.get_translator(minetest.get_current_modname())
 local param_maxlen = mesecon.setting("commandblock_param_maxlen", 10000)
-local sp = minetest.is_singleplayer()
 
 minetest.register_chatcommand("say", {
 	params = "<text>",
@@ -131,6 +130,12 @@ local function resolve_commands(commands, pos)
 	return commands
 end
 
+minetest.register_privilege("commandblock", {
+	description = S("Allows using a Command Block"),
+	give_to_singleplayer = true,
+	give_to_admin = true
+})
+
 local function commandblock_action_on(pos, node)
 	if node.name ~= "mesecons_commandblock:commandblock_off" then
 		return
@@ -167,10 +172,8 @@ local function commandblock_action_on(pos, node)
 		end
 
 		local privs = cmddef.privs
-		if not sp then
-			privs = table.copy(privs)
-			privs.give = true -- allow use by server admins only
-		end
+		privs = table.copy(privs)
+		privs.commandblock = true
 		local has_privs, missing_privs = minetest.check_player_privs(owner, privs)
 		if not has_privs then
 			minetest.chat_send_player(owner, S("You don't have permission "
@@ -183,9 +186,10 @@ local function commandblock_action_on(pos, node)
 		if not success then
 			minetest.log("error", string.format(
 				"[commandblock] Error while running cmd '%s' with param '%s' by '%s' at block %s: %s",
-				cmd, (param or "nil"), owner, minetest.pos_to_string(pos), result_or_err
-			))
-			minetest.chat_send_player(owner, "Error while running cmd \"%s\"")
+				cmd, (param or "nil"), owner, minetest.pos_to_string(pos), result_or_err))
+			minetest.chat_send_player(owner, string.format(
+				"Error while running cmd \"%s\" with param \"%s\"",
+				cmd, (param or "nil")))
 		end
 	end
 end
