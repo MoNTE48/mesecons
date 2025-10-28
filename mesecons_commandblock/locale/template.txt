@@ -14,6 +14,7 @@ not owned=
 owned by @1=
 
 The command "@1" does not exist=
+Command parameters can only be @1 bytes long=
 You don't have permission to run @1 (missing privileges: @2)=
 
 Allows using a Command Block

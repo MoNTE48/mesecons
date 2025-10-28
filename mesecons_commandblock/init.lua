@@ -44,14 +44,7 @@ minetest.register_chatcommand("hp", {
 	end
 })
 
-local function initialize_data(meta)
-	local commands = minetest.formspec_escape(meta:get_string("commands"))
-	meta:set_string("formspec",
-		"size[9,5]" ..
-		"textarea[0.5,0.5;8.5,4;commands;" .. S("Commands:") .. ";"..commands.."]" ..
-		"label[0.2,3.8;" ..
-			S("@nearest, @farthest, and @random are replaced by the respective player names") .. "]" ..
-		"button_exit[3.3,4.5;2,1;submit;" .. S("Submit") .. "]")
+local function update_infotext(meta)
 	local owner = meta:get_string("owner")
 	if owner == "" then
 		owner = S("not owned")
@@ -59,41 +52,82 @@ local function initialize_data(meta)
 		owner = S("owned by @1", owner)
 	end
 	meta:set_string("infotext", S("Command Block") .. "\n" ..
-		"(" .. owner .. ")\n" ..
-		S("Commands:") .. " " ..commands)
+		"(" .. owner .. ")")
 end
 
 local function construct(pos)
 	local meta = minetest.get_meta(pos)
 
 	meta:set_string("commands", "tell @nearest Commandblock unconfigured")
+	meta:mark_as_private("commands")
 
 	meta:set_string("owner", "")
 
-	initialize_data(meta)
+	update_infotext(meta)
 end
 
 local function after_place(pos, placer)
 	if placer then
 		local meta = minetest.get_meta(pos)
 		meta:set_string("owner", placer:get_player_name())
-		initialize_data(meta)
+		update_infotext(meta)
 	end
 end
 
-local function receive_fields(pos, _, fields, sender)
-	if not fields.submit then
-		return
-	end
+local positions = {}
+
+minetest.register_on_leaveplayer(function(player)
+	positions[player:get_player_name()] = nil
+end)
+
+local function on_rightclick(pos, _, clicker)
+	local name = clicker:get_player_name()
 	local meta = minetest.get_meta(pos)
 	local owner = meta:get_string("owner")
-	if owner ~= "" and sender:get_player_name() ~= owner then
+	if owner ~= "" and name ~= owner and
+			not minetest.check_player_privs(clicker, "protection_bypass") then
 		return
 	end
-	meta:set_string("commands", fields.commands)
 
-	initialize_data(meta)
+	local commands = minetest.formspec_escape(meta:get_string("commands"))
+	positions[name] = pos
+	minetest.show_formspec(name, "mesecons_commandblock:configure",
+		"size[9,5]" ..
+		"textarea[0.5,0.5;8.5,4;commands;" .. S("Commands:") .. ";"..commands.."]" ..
+		"label[0.2,3.8;" ..
+			S("@nearest, @farthest, and @random are replaced by the respective player names") .. "]" ..
+		"button_exit[3.3,4.5;2,1;submit;" .. S("Submit") .. "]")
 end
+
+minetest.register_on_player_receive_fields(function(player, formname, fields)
+	if formname ~= "mesecons_commandblock:configure" then
+		return
+	end
+
+	local name = player:get_player_name()
+	local pos = positions[name]
+	if fields.quit then
+		positions[name] = nil
+	end
+
+	local node_name = pos and minetest.get_node(pos).name
+	if node_name ~= "mesecons_commandblock:commandblock_off" and
+			node_name ~= "mesecons_commandblock:commandblock_on" then
+		return
+	end
+
+	local meta = minetest.get_meta(pos)
+	local owner = meta:get_string("owner")
+	if owner ~= "" and name ~= owner then
+		return
+	end
+
+	if fields.commands and fields.submit then
+		meta:set_string("commands", fields.commands)
+		meta:mark_as_private("commands")
+		update_infotext(meta)
+	end
+end)
 
 local function resolve_commands(commands, pos)
 	local players = minetest.get_connected_players()
@@ -166,8 +200,8 @@ local function commandblock_action_on(pos, node)
 		end
 
 		if #param > param_maxlen then
-			minetest.chat_send_player(owner, "Command parameters can only be " ..
-				param_maxlen .. " bytes long")
+			minetest.chat_send_player(owner,
+				S("Command parameters can only be @1 bytes long", param_maxlen))
 			return
 		end
 
@@ -216,7 +250,7 @@ minetest.register_node("mesecons_commandblock:commandblock_off", {
 	groups = {cracky=2, mesecon_effector_off=1},
 	on_construct = construct,
 	after_place_node = after_place,
-	on_receive_fields = receive_fields,
+	on_rightclick = on_rightclick,
 	can_dig = can_dig,
 	sounds = mesecon.node_sound.stone,
 	mesecons = {effector = {
@@ -233,11 +267,26 @@ minetest.register_node("mesecons_commandblock:commandblock_on", {
 	drop = "mesecons_commandblock:commandblock_off",
 	on_construct = construct,
 	after_place_node = after_place,
-	on_receive_fields = receive_fields,
+	on_rightclick = on_rightclick,
 	can_dig = can_dig,
 	sounds = mesecon.node_sound.stone,
 	mesecons = {effector = {
 		action_off = commandblock_action_off
 	}},
 	on_blast = mesecon.on_blastnode,
+})
+
+minetest.register_lbm({
+	name = "mesecons_commandblock:hide_commands",
+	label = "Update legacy command blocks",
+	nodenames = {
+		"mesecons_commandblock:commandblock_off",
+		"mesecons_commandblock:commandblock_on"
+	},
+	action = function(pos)
+		local meta = minetest.get_meta(pos)
+		meta:set_string("formspec", "")
+		meta:mark_as_private("commands")
+		update_infotext(meta)
+	end
 })
