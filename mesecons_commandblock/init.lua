@@ -85,7 +85,7 @@ local function on_rightclick(pos, _, clicker)
 	local meta = minetest.get_meta(pos)
 	local owner = meta:get_string("owner")
 	if owner ~= "" and name ~= owner and
-			not minetest.check_player_privs(clicker, "protection_bypass") then
+			not minetest.check_player_privs(clicker, "commandblock") then
 		return
 	end
 
@@ -239,7 +239,7 @@ local function can_dig(pos, player)
 	local meta = minetest.get_meta(pos)
 	local owner = meta:get_string("owner")
 	return owner == "" or (player and (owner == player:get_player_name() or
-		minetest.check_player_privs(player, "protection_bypass")))
+		minetest.check_player_privs(player, "commandblock")))
 end
 
 minetest.register_node("mesecons_commandblock:commandblock_off", {
