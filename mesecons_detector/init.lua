@@ -16,14 +16,20 @@ end
 
 -- Object detector
 -- Detects players in a certain radius
--- The radius can be specified in mesecons/settings.lua
+-- The radius can be changes by right-click (by default 6)
 
-local function object_detector_make_formspec(pos)
-	local meta = minetest.get_meta(pos)
-	meta:set_string("formspec", "size[9,2.5]" ..
+local MAX_RADIUS = mesecon.setting("detector_radius", 16)
+
+local function real_make_formspec(meta)
+	meta:set_string("formspec", "size[9,5]" ..
 		"field[0.3,  0;9,2;scanname;Name of player to scan for (empty for any):;${scanname}]"..
 		"field[0.3,1.5;4,2;digiline_channel;Digiline Channel (optional):;${digiline_channel}]"..
-		"button_exit[7,0.75;2,3;;Save]")
+		"field[0.3,3;4,2;radius;Detection radius:;${radius}]"..
+		"button_exit[3.5,3.5;2,3;;Save]")
+end
+
+local function object_detector_make_formspec(pos)
+	real_make_formspec(minetest.get_meta(pos))
 end
 
 local function object_detector_on_receive_fields(pos, _, fields, sender)
@@ -34,17 +40,28 @@ local function object_detector_on_receive_fields(pos, _, fields, sender)
 	local meta = minetest.get_meta(pos)
 	meta:set_string("scanname", fields.scanname)
 	meta:set_string("digiline_channel", fields.digiline_channel)
-	object_detector_make_formspec(pos)
+	local r = tonumber(fields.radius)
+	if r then
+		meta:set_int("radius", r)
+	end
+	real_make_formspec(meta)
 end
 
 -- returns true if player was found, false if not
 local function object_detector_scan(pos)
-	local objs = minetest.get_objects_inside_radius(pos, mesecon.setting("detector_radius", 6))
+	local meta = minetest.get_meta(pos)
+
+	local radius = math.min(meta:get_int("radius"), MAX_RADIUS)
+	if radius <= 0 then
+		radius = 6
+	end
+
+	local objs = minetest.get_objects_inside_radius(pos, radius)
 
 	-- abort if no scan results were found
 	if next(objs) == nil then return false end
 
-	local scanname = minetest.get_meta(pos):get_string("scanname")
+	local scanname = meta:get_string("scanname")
 	local scan_for = comma_list_to_table(scanname)
 
 	local every_player = scanname == ""
@@ -66,10 +83,32 @@ local object_detector_digiline = {
 	effector = {
 		action = function(pos, _, channel, msg)
 			local meta = minetest.get_meta(pos)
-			if channel == meta:get_string("digiline_channel") and
-					(type(msg) == "string" or type(msg) == "number") then
+			local active_channel = meta:get_string("digiline_channel")
+			if channel ~= active_channel then
+				return
+			end
+			if type(msg) == "string" then
 				meta:set_string("scanname", msg)
-				object_detector_make_formspec(pos)
+				real_make_formspec(meta)
+			elseif type(msg) == "table" then
+				if msg.radius then
+					local r = tonumber(msg.radius)
+					if r then
+						meta:set_int("radius", tonumber(msg.radius))
+						real_make_formspec(meta)
+					end
+				end
+				if type(msg.scanname) == "string" then
+					meta:set_string("scanname", msg.scanname)
+					real_make_formspec(meta)
+				end
+				if msg.command == "get" then
+					local found, name = object_detector_scan(pos)
+					if not found then
+						name = ""
+					end
+					digiline:receptor_send(pos, digiline.rules.default, channel, name)
+				end
 			end
 		end,
 	}
