@@ -388,14 +388,18 @@ end
 --Commands
 yc.command_on = function(params, L)
 	for i, port in ipairs(params) do
-		L = yc.set_portstate (port, true, L)
+		local newL = yc.set_portstate(port, true, L)
+		if newL == nil then return nil end
+		L = newL
 	end
 	return L
 end
 
 yc.command_off = function(params, L)
 	for i, port in ipairs(params) do
-		L = yc.set_portstate (port, false, L)
+		local newL = yc.set_portstate(port, false, L)
+		if newL == nil then return nil end
+		L = newL
 	end
 	return L
 end
