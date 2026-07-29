@@ -30,9 +30,10 @@ read_globals = {
 	"VoxelArea",
 	"mcl_dyes",
 	"mcl_sounds",
+	"PLATFORM",
 }
 
-globals = {"mesecon"}
+globals = {"mesecon", "mesecons_luacontroller"}
 
 files["mesecons/actionqueue.lua"] = {
 	globals = {"minetest.registered_globalsteps"},
