@@ -155,7 +155,7 @@ end
 end
 end
 
-if minetest.get_modpath("mesecons_luacontroller") then
+if minetest.global_exists("mesecons_luacontroller") then
 	minetest.register_craft({
 		type = "shapeless",
 		output = "mesecons_microcontroller:microcontroller0000",
@@ -168,7 +168,7 @@ if minetest.get_modpath("mesecons_luacontroller") then
 	})
 else
 	minetest.register_craft({
-		output = 'craft "mesecons_microcontroller:microcontroller0000" 2',
+		output = 'mesecons_microcontroller:microcontroller0000 2',
 		recipe = {
 			{'mesecons_materials:silicon', 'mesecons_materials:silicon', 'group:mesecon_conductor_craftable'},
 			{'mesecons_materials:silicon', 'mesecons_materials:silicon', 'group:mesecon_conductor_craftable'},
